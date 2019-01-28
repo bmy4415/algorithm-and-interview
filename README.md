@@ -8,3 +8,9 @@
 
 ### histories
 - 2019.01.21 - migration 완료
+- 2019.01.28
+    - 알고리즘 문제를 풀 때 python maximum call stack 주의!!!
+    -   ```
+        import sys
+        sys.setrecursionlimit(1500)
+        ```
