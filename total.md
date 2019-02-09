@@ -224,3 +224,95 @@
 		- level1 page는 2^10개
 		- 각 level1 page마다 2^10개의 PTE를 갖음
 		- level1 page는 모두 사용중인 것이 아니므로 level1 page가 사용중이지 않은 page들에 해당하는 level2 page공간은 아직 필요가 없음 => page table이 너무 커지는 문제에 어느정도 기여
+
+#### process vs thread
+- process
+	- 실행중인 프로그램을 process라고 함, 프로그램의 인스턴스
+	- process는 OS로부터 자원(cpu, 메모리 등)을 할당받는 단위임
+	- 똑같은 프로그램을 여러개를 실행할 경우 여러개의 process가 생김
+	- 독립적인 메모리 공간을 가짐(code, data, heap, stack), 서로 다른 프로세스는 기본적으로 메모리 공유를 하지 않음, 메모리 공유를 위해서는 IPC, socket 등을 이용하여야함
+	- 같은 프로그램의 process일 경우 code는 공유하는 OS도 있음
+	- 각 프로세스는 1개의 thread(main thread)를 가짐
+- thread
+	- process 내에서의 실행 흐름을 thread라고 함
+	- thread는 process 내부에 존재하며 process와 달리 메모리 공간을 공유함
+		- code(소스코드 등), data(전역변수, static변수 등), heap(동적메모리 할당 등) 공간은 공유함
+		- stack 영역은 공유하지 않음
+		- code 공유 => 각 thread마다 같은 code 및 function을 이용할 수 있음
+		- data, heap 공유 => 여러 thread가 같은 변수를 공유할 수 있음
+		- stack, register는 별도 => stack은 function을 이용하기위한 최소의 조건임(function parameter, local variable을 저장하는 위치), thread마다 stack을 갖는다는 것은 thread마다 독립적인 실행 흐름을 갖을 수 있고 function call을 할 수 있다는 의미
+- process vs thread
+	- 독립적인 메모리 공간을 갖느냐의 차이
+	- process는 독립적인 메모리 공간을 갖으므로 process간의 context switch를 할 때 cost가 크다(메모리 공간을 바꿔줘야 하므로, 또한 cache memory까지도 바꿔줌)
+	- thread는 code, data, heap을 공유하므로 thread간의 context switch를 할 때 cost가 작다(cache memory도 바꾸지 않음)
+	- thread는 메모리를 공유하므로 race condition을 고려하여야 한다
+
+#### cpu 스케줄링
+- 하나의 코어에 여러개의 process를 돌릴때, cpu에 할당할 process 순서를 정하는 일
+- 프로세스의 상태
+	- ready, running, blocked, terminated 4개의 상태 존재
+	- ready -> running: 스케줄러에 의해 cpu를 할당받는 경우
+	- running -> ready: 스케줄러에 의해 cpu를 뺏기는 경우(preemptive scheduler)
+	- running -> blocked: I/O요청 등의 경우
+	- blocked -> ready: I/O요청 등이 끝난 경우
+- ready상태의 process들 중 어떤 것을 running 상태로 바꿀것 인지를 스케줄러가 정함
+- preemptive vs non-preemptive
+	- 스케줄러가 cpu사용 권한을 뺏을 수 있는지 여부에 따라 뺏을수 있는 경우를 preemptive, 뺏을수 없는 경우를 non-preemptive라고 함
+	- non-preemptive 스케줄러의 경우 process가 자발적으로 cpu 사용을 내려놓는 2가지 경우(종료 / IO요청)에만 다른 process가 cpu 사용권 획득 가능
+- 성능 측정 metric
+	- 평균 대기시간
+	- 평균 턴어라운드(시작 시점부터 끝나는 시점 까지의 시간) 시간
+- 스케줄링 알고리즘
+	- FCFS(First Come First Served)
+		- preemptive 스케줄링 방법
+		- 먼저온 process를 먼저 실행, queue를 이용
+		- 장점
+			- 간단하고 공평함
+		- 단점
+			- 평균 대기시간, 평균 턴어라운드시간이 안좋음
+	- SJF(Shortest Job First)
+		- non-preemptive 스케줄링 방법
+		- 길이가 짧은 process를 먼저 스케줄링하는 방법
+		- 장점
+			- 평균 대기시간, 평균 턴어라운드 시간이 좋음
+		- 단점
+			- 계속 수행시간이 짧은 process가 추가되면 수행시간이 긴 process는 starvation상태가 됨
+				- aging(오래 기다린 process에게 우선순위를 올려줌)을 통해서 해결 가능
+			- 미리 수행시간을 알 수가 없음, 이론적인 스케줄링 방법
+	- SRTF(Shortest Remaining Time First)
+		- preemptive 스케줄링 방법(SJF의 preemptive version)
+		- 남은 수행시간이 가장 짧은 process를 먼저 실행하는 스케줄링 방법
+		- 장점
+			- 평균 대기시간, 평균 턴어라운드 시간이 SJF보다도 더 좋음
+		- 단점
+			- context switch 횟수가 늘어남
+			- SJF와 마찬가지로 remaining time이 긴 process에 starvation 발생 가능
+				- aging을 통해 극복 가능
+			- SJF와 마찬가지로 미리 수행시간을 알 수가 없음
+	- RR(Round Robin)
+		- preemptive 스케줄링 방법
+		- 각 process를 FCFS의 순서로 time quantum(= time slice)를 나눠줌
+		- 각 process는 time quantum을 다 사용하면 cpu 사용권을 뺏기고 다음 process가 cpu 사용권을 획득함
+		- time quantum이 크면 FCFS와 유사해지고 time quantum이 작으면 context switch가 너무 빈번해짐
+			- 적당한 time quantum을 정하는 것이 중요
+		- 장점
+			- 미리 수행시간을 알 수 없는 문제를 겪지 않아도 됨
+			- 일정 시간동안 돌아가면서 일을 하므로 responsive함
+		- 단점
+			- time quantum을 잘못 설정하면 문제가 생김
+				- 너무 길면 FCFS가 됨
+				- 너무 짧으면 context switch overhead가 커짐
+	- multi-level queue
+		- ready queue를 여러개의 level로 나누고 각 level마다 다른 우선순위를 줌
+		- 각 level 마다 서로다른 스케줄링 알고리즘 적용
+		- process는 특정 level에 속해있으며 multi-level feedback queue인 경우 다른 level로 이동 가능
+
+
+
+#### lock
+
+
+#### concurrent vs parallel
+
+#### 객체 클래스 오브젝트
+
