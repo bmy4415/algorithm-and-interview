@@ -173,3 +173,54 @@
 		9. thread1과 thread2가 각각 num++을 수행하였으나 num의 값은 1만 증가하였음
 - race condition에서 발생하는 inconsistency 문제를 해결하기 위해 lock을 사용할 수 있음
 	- 공유 자원(여기서는 num의 memory 값)에 lock을 걸어서 lock을 소유한 thread만이 값을 write할 수 있음
+
+
+#### page fault
+- 가상메모리란?
+	- 실제 메모리보다 더 큰 메모리를 사용하는듯한 illusion을 주기위한 방법
+		- disk(느린 장치)의 도움을 받아서 결과적으로 더 많은 메모리를 사용하는듯한 illusion을 줌
+	- 각 프로세스는 각자의 가상메모리 공간을 가짐
+		- A 프로세스의 0x123 주소와 B 프로세스의 0x123 주소는 실제메모리에서 전혀 다른 주소임
+	- software level에서는 (충분히 큰) 가상메모리만 이용하면 됨
+	- 가상메모리와 실제메모리의 mapping은 page table이 해줌
+	- 즉 프로세스 마다 가상메모리 공간과 page table을 가짐
+	- 가상메모리의 단위를 page라고함, 주로 4kb크기 page를 이용
+	- 이것이 가능한 이유는 하나의 process를 실행할 때, 모든 영역이 다 메모리에 올라와있지 않고 필요한 부분만 올라와도 실행에 문제가 없기 때문
+	- 실제메모리에는 page들이 올라와있고 내가 필요한 page가 메모리에 없을때(= disk에 있을때)는 disk의 page와 실제메모리의 page를 교체함(page replacement)
+	- 참조의 spatial/temporal locality 때문에 실제로 페이지 교체는 자주 일어나지 않음
+	- high level programming을 하면서 보는 모든 주소는 다 virtual address(가상메모리 주소)임
+- page
+	- 가상메모리를 구성하는 단위
+	- page의 크기가 너무 작으면 I/O빈도가 늘어나고 page의 크기가 너무 크면 fraction이 커짐
+	- 주로 4kb크기 page를 이용
+- page table
+	- 가상메모리 주소와 실제메모리 주소의 mapping정보를 가진 table
+	- 메모리에 위치
+	- page table의 cache 역할을 하는 것이 TLB(table lookaside buffer)
+	- TLB는 MMU에 위치함
+- page fault handling scenario
+	- cpu가 특정 memory address(가상메모리 주소)에 접근을 요구함
+	- MMU(memory management unit)이 TLB를 확인
+		- TLB에 있을 경우 실제메모리로 접근
+		- TLB에 없을 경우 page table을 확인
+			- page table에 등록조차 되어있지 않은 주소면 잘못된 주소이므로 process 종료
+			- page table에 등록되어 있는 주소인데 해당 page가 메모리에 없으면(즉 disk에 있다면) disk에서 메모리로 해당 page를 upload함, 이때 메모리에 여유공간이 있으면 바로 upload가 가능하지만 여유공간이 없다면 disk로 옮겨야할 page를 정해야함 => page replacement algorithm
+		- page table에 등록되어있는 가상메모리 주소인 경우 TLB에 update하고 실제메모리로 접근
+- demand paging
+	- 프로세스를 실행하기위한 모든 주소영역을 메모리에 다 올리는 것이 아니라 필요할 때 마다 메모리에 올리는 것
+- page replacement algorithm
+	- page fault에 의해 실제메모리에 올라온 page를 교체할 때 필요한 algorithm
+	- 주로 LRU(least recently used) 이용
+		- 사용하지 않은지 가장 오래된 것을 버림
+- copy on write
+	- 부모 프로세스에서 자식 프로세스를 clone 할 때, 자식 프로세스에서 write하기 전에는 부모 프로세스와 같은 실제메모리의 page를 이용하고, 자식 프로세스에서 write가 생겼을 때, 새로운 page를 할당해서 자식 프로세스에게 제공함으로써 메모리 공간을 절약할 수 있음
+- multi-level page table
+	- page table의 크기를 줄이기위해 page table을 다시 paging하는 방법
+	- 32bit, 4kb page 크기인 시스템의 경우
+		- 전체 page의 갯수 => 2^32(전체 주소 공간) / 2^12(page 1개의 크기) = 2^20개의 page
+		- page table entry의 크기 => 페이지 번호(20bit) + 페이지 내부 offset(12bit == page의 크기) = 32bit = 4byte
+		- 프로세스별 page table의 크기 = PTE 크기 * PTE 갯수 = 4byte * 2^20 = 4MB
+	- PTE의 페이지 번호(20bit) = level1 page번호(10bit) + level2 page번호(10bit)
+		- level1 page는 2^10개
+		- 각 level1 page마다 2^10개의 PTE를 갖음
+		- level1 page는 모두 사용중인 것이 아니므로 level1 page가 사용중이지 않은 page들에 해당하는 level2 page공간은 아직 필요가 없음 => page table이 너무 커지는 문제에 어느정도 기여
