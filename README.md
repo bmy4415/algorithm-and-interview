@@ -15,4 +15,4 @@
         sys.setrecursionlimit(1500)
         ```
 - 2019.02.08 - https://programmers.co.kr/learn/challenges(hash, heap, bfs/dfs, 완전탐색) 완료
-- 2019.02.09 - 가상메모리/page fault 정리, process vs thread 정리, scheduling 정리
+- 2019.02.09 - 가상메모리/page fault 정리, process vs thread 정리, scheduling 정리, concurrent vs parallel 정리, critical section/mutex/semaphore/deadlock/livelock 정리

@@ -255,9 +255,9 @@
 	- running -> ready: 스케줄러에 의해 cpu를 뺏기는 경우(preemptive scheduler)
 	- running -> blocked: I/O요청 등의 경우
 	- blocked -> ready: I/O요청 등이 끝난 경우
-- ready상태의 process들 중 어떤 것을 running 상태로 바꿀것 인지를 스케줄러가 정함
+- ready상태의 process들 중(ready queue에 있는 process들) 어떤 것을 running 상태로 바꿀것 인지를 스케줄러가 정함
 - preemptive vs non-preemptive
-	- 스케줄러가 cpu사용 권한을 뺏을 수 있는지 여부에 따라 뺏을수 있는 경우를 preemptive, 뺏을수 없는 경우를 non-preemptive라고 함
+	- 스케줄러가 cpu사용 권한을 process로 부터 뺏을 수 있는지 여부에 따라 뺏을수 있는 경우를 preemptive, 뺏을수 없는 경우를 non-preemptive라고 함
 	- non-preemptive 스케줄러의 경우 process가 자발적으로 cpu 사용을 내려놓는 2가지 경우(종료 / IO요청)에만 다른 process가 cpu 사용권 획득 가능
 - 성능 측정 metric
 	- 평균 대기시간
@@ -307,12 +307,45 @@
 		- 각 level 마다 서로다른 스케줄링 알고리즘 적용
 		- process는 특정 level에 속해있으며 multi-level feedback queue인 경우 다른 level로 이동 가능
 
-
-
 #### lock
-
+- critical section: (process간 또는 thread간)공유변수에 접근하는 코드 영역 == race condition이 발생하는 코드 영역
+	- 공유 변수에 여러개의 process 또는 thread가 동시에 접근하면 inconsistency가 발생할 수 있음
+- critical section 문제를 해결하기위한 조건
+	- Mutual Exclusion: critical section에는 동시에 오직 1개의 process 또는 thread만 접근 가능
+	- Progress: critical section을 사용중인 process 또는 thread가 없는 경우, 어떤 process나 thread도 사용 가능해야함
+	- Bounded Waiting: critical section의 사용을 기다릴 때, 유한시간만을 기다림이 보장되어야 함
+- critical section 문제 해결 방법
+	- 결국 atomic한 instruction을 이용해서 critical section이 사용중인지를 나타낼 수 있어야 한다
+	- 하드웨어적 해결방법
+		- TestAndSet 등
+	- 소프트웨어적 해결 방법
+		- Semaphore 등
+- MUTEX == Mutual Exclusion == critical section에 오직 1개의 process 또는 thread만 접근해야 한다는 **조건**
+- Semaphore: mutex 조건을 만족시키기 위해 소프트웨어적으로 구현한 방법, 특히 binary semaphore의 경우 mutex의 조건을 만족하는 경우이고, counting semaphore의 경우 오직 1개가 아니라 한정된 여러개의 process 또는 thread가 접근할 수 있도록 함
+- deadlock
+	- 여러 thread가 서로 lock을 잡으려고 대기하고있어서 결국 아무도 lock을 잡지 못하고 아무것도 진행되지 않는 상황
+	- ex) thread t1과 t2가 각각 lock A, B를 둘 다 잡고 뭔가 수행하려고 하는데, t1이 A를 잡고 t2가 B를 잡고 있는 경우, t1은 B를 잡으려고 하지만 B는 이미 t2가 잡고있어서 영원히 B를 못잡고, t2는 A를 잡으려 하지만 A는 이미 t1이 잡고있어서 영원히 A를 못잡아서 두 thread t1, t2는 영원히 대기만 하는 상황
+	- deadlock의 4가지 조건
+		- 상호배제(mutual exclusion) - critical section에 오직 1개의 thread만 접근이 가능해야한다
+		- 점유대기(hold and wait) - 이미 lock을 가진 상태에서 다른 lock을 잡기위해 대기한다
+		- 비선점(no preemption) - 다른 thread의 lock을 빼앗을 수 없다
+		- 순환대기(circular wait) - 각 thread는 순환적으로 다음 thread가 원하는 lock을 가지고 있다(위의 예시의 경우 t1은 t2가 원하는 A를 가지고 있고 t2는 t1이 원하는 B를 가지고 있음)
+	- deadlock의 해결 방법
+		- 일반적인 해결방법은 없음
+		- 주로 순환대기(circular wait)을 막는 방법으로 수행하거나 - 자원에 순서를 매김, 아니면 deadlock이 발생할 확률이 적은 경우 따로 대책을 마련하지 않고 deadlock 발생시(너무 오랫동안 아무일도 안할경우) restart 하는 등의 방법으로 무마시킨다
+- livelock
+	- 주로 deadlock을 해결하기 위해 코드를 변경할 때 나타나는 문제
+	- deadlock에서 영원히 기다리는 문제를 해결하기 위해, 내가 필요한 lock을 다 잡지 못한 경우, 내가 가진 lock을 놓아주는데(hold and wait의 방지) 문제는 영원히 lock을 잡았다 놓았다 하면서 필요한 모든 lock은 잡지 못하는 경우
+	- deadlock과의 가장 큰 차이는 deadlock은 무한정 대기 이고 livelock은 lock을 잡았다 놓았다를 반복
 
 #### concurrent vs parallel
+- concurrent는 logical level, parallel은 physical level 용어임
+- 둘 다 multi thread 환경에서 주로 사용하는 용어
+- concurrent는 multi thread가 동시에 돌아가는 것 **처럼** 보이는 것
+	- single core, multi core 둘 다에서 가능
+- parallel은 **실제로** thread가 동시에 돌아가는것
+	- single core에서 불가능, **multi core에서만 가능**
+- 즉 **physical core의 갯수차이** 라고 할 수 있다
 
 #### 객체 클래스 오브젝트
 
