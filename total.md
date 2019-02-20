@@ -401,5 +401,20 @@
     foo('a', 'b', name='c', 15) # error
     foo('a', 'b', name='jw', age=15) # ('a', 'b') {'age': 15, 'name': 'jw'}
 
+## python function annotation
+- 함수에 대하여 다는 주석과 같은 역할, 문법적 역할이나 강제사항, 효력 등은 없음
+    - 단, compile time에 어딘가에 저장됨 : **foo.__annotations__**
+    - mypy 등 외부 library를 이용하여 type check 가능
+- example
+    ```
+    def foo(a:int, b:'string'='hi') -> 'hello':
+        print(a, b)
+
+    foo('ab', 'cd') # 'ab cd'
+    foo(1, 2) # '1 2'
+
+    foo.__annotation__ # {'return': 'hello', 'b': 'string', 'a': <class 'int'>}
+    ```
+
 #### 객체 클래스 오브젝트
 - TODO
