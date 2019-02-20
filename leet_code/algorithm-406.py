@@ -8,6 +8,29 @@ so sort people by h desc k asc, then k will be index of (h,k) in result array
 '''
 
 
+''' first solution
+import bisect
+
+
+class Solution:
+    def reconstructQueue(self, people: 'List[List[int]]') -> 'List[List[int]]':
+        people.sort(key=lambda x: (x[0], x[1])) # sort by (h, k) ascending
+        result_info = [] # heights in result
+        result = []
+        while people:
+            for i, p in enumerate(people):
+                h, k = p
+                index = bisect.bisect_left(result_info, h)
+                k_prime = len(result_info) - index
+                if k == k_prime:
+                    people.pop(i)
+                    result_info.insert(index, h)
+                    result.append(p)
+                    break
+
+        return result
+'''
+
 class Solution:
     def reconstructQueue(self, people: 'List[List[int]]') -> 'List[List[int]]':
         result = []
