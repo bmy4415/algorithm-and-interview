@@ -19,4 +19,5 @@
 - 2019.02.20
     - study meaning of asterisk(\*) in python function definition
     - study python annotation
-    - leetcode algorithm 104 solved
+    - leetcode algorithm 104, 406 solved
+- 2019.03.11 - leetcode algorithm 78 solved
