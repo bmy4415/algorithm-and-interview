@@ -21,3 +21,4 @@
     - study python annotation
     - leetcode algorithm 104, 406 solved
 - 2019.03.11 - leetcode algorithm 78 solved
+- 2019.03.15 - leetcode algorithm 300 solved
