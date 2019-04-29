@@ -347,7 +347,7 @@
 	- single core에서 불가능, **multi core에서만 가능**
 - 즉 **physical core의 갯수차이** 라고 할 수 있다
 
-## python function argument and \*(asterisk)
+#### python function argument and \*(asterisk)
 - python function의 argument는 `positional argument`와 `keyword argument`가 있음
 - positional argument는 argument의 위치에 따라 값을 넘겨받음
 - keyword argument는 argument의 keyword에 의해 값이 정해짐
@@ -401,7 +401,7 @@
     foo('a', 'b', name='c', 15) # error
     foo('a', 'b', name='jw', age=15) # ('a', 'b') {'age': 15, 'name': 'jw'}
 
-## python function annotation
+#### python function annotation
 - 함수에 대하여 다는 주석과 같은 역할, 문법적 역할이나 강제사항, 효력 등은 없음
     - 단, compile time에 어딘가에 저장됨 : **foo.__annotations__**
     - mypy 등 외부 library를 이용하여 type check 가능
@@ -418,3 +418,27 @@
 
 #### 객체 클래스 오브젝트
 - TODO
+
+#### memory 영역
+- 보통 process가 실행되면 code, data, stack, heap으로 memory 영역이 구성됨
+- code: process의 code가 저장됨
+- data: global variable과 static 변수(process의 시작부터 끝까지 존재하는 변수)가 존재
+	- initialized variable은 data영역에, uninitialized variable은 bss영역에 저장됨
+- stack
+	- stack frame(하나의 function에서 사용되는 stack의 범위)이 저장되는 장소
+	- stack frame 다음의 요소들 등으로 구성됨
+		- local variable
+		- parameter
+		- return address
+	- stack frame은 ESP와 EBP라는 두개의 register가 가르키는 주소값 사이의 영역임
+	- function을 쉽게 구현하기위해 stack영역 사용
+- heap
+	- function은 종료가 되면 해당 function 내부에서 선언된 local variable 등(== stack에 저장된 variable들)이 다 사라짐(접근 불가능)
+	- heap은 stack에 저장된 variable과 달리 계속 접근 가능함
+	- 주로 동적으로 할당된 객체들이 저장되는 장소(java에서의 new 등)
+	- 명시적으로 free 해주거나 language에 따라서 garbage collector가 지워주기 전까지 존재
+- stack과 heap의 가장 큰 차이
+	- stack은 임시저장공간(function이 live한 동안)
+	- heap은 (비교적) 영구저장공간(function의 liveness와 관계없이 값이 저장됨)
+- 위의 내용은 C언어 기준이고 python 등의 다른 언어에서는 각기 다른 방식으로 memory를 사용함
+	- ex) CPython에서는 모든 object가 `private heap`이라는 곳에 저장됨
